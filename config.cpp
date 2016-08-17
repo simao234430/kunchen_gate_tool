@@ -1,6 +1,6 @@
-#include "model.h"
+#include "config.h"
 
-Model::Model(QObject *parent) : QObject(parent)
+config::config(QObject *parent) : QObject(parent)
 {
 
 }

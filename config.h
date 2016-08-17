@@ -1,23 +1,17 @@
-#ifndef MODEL_H
-#define MODEL_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #include <QObject>
 
-class Model : public QObject
+class config : public QObject
 {
-
     Q_OBJECT
-
-    QString ip;
-    QString port;
-    QString time; //统计时长
-    QString time_setp; //显示间隔
 public:
-    explicit Model(QObject *parent = 0);
+    explicit config(QObject *parent = 0);
 
 signals:
 
 public slots:
 };
 
-#endif // MODEL_H
+#endif // CONFIG_H
