@@ -1,4 +1,4 @@
-#include "stationdata.h"
+﻿#include "stationdata.h"
 #include <qdebug.h>
 #include <QTimer>
 
@@ -27,10 +27,7 @@ StationData::StationData(QString& idNo,TableModel* model)
 
 }
 
-//void StationData::timeout_updataInterface()
-//{
-//    //qDebug() << "timeout_updataInterface";
-//}
+
 
 void StationData::init()
 {

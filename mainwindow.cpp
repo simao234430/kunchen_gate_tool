@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QtGui/QStandardItemModel>
 #include <QMessageBox>
@@ -24,11 +24,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::initInput()
 {
-    ui->Input_ip->setText(tr("127.0.0.1"));
-    ui->Input_port->setText(tr("8888"));
-    ui->Input_time->setText(tr("-1"));
-    ui->Input_time_step->setText(tr("1"));
-    ui->input_gate_value->setText(tr("100"));
+    ui->Input_ip->setText(QStringLiteral("192.168.0.9"));
+    ui->Input_port->setText(QStringLiteral("5555"));
+    ui->Input_time->setText(QStringLiteral("-1"));
+    ui->Input_time_step->setText(QStringLiteral("1"));
+    ui->input_gate_value->setText(QStringLiteral("100"));
 }
 
 void MainWindow::updateInterface()
@@ -59,15 +59,15 @@ void MainWindow::init()
 {
     initInput();
     initModel();
+    isStarted = false;
     qDebug() << "init";
     netWork = new NetWork(this);
-    //updateInterface();
+
 }
 
 void MainWindow::timeout_handler()
 {
-    //interfaceTimer->stop();
-    //qDebug() << "stop";
+
     this->clickStartButton();
 
 }
@@ -77,22 +77,21 @@ void MainWindow::clickStartButton()
     if(false == isStarted) {
         bool result = netWork->start();
         if(result == true){
-            ui->StartButton->setText(tr("停止"));
+            ui->StartButton->setText(QStringLiteral("停止"));
             isStarted = true;
+        }else{
+            qDebug() << "result" << result;
         }
         int stop_time = ui->Input_time->text().toUInt();
         if(stop_time >0){
-            //qDebug() <<"stop_time >0";
-            //interfaceTimer = new QTimer(this);
-            //interfaceTimer->start(stop_time*1000);
             QTimer::singleShot(stop_time*1000, this, SLOT(timeout_handler()));
-            //connect(interfaceTimer, SIGNAL(timeout()), this, SLOT(timeout_handler()));
         }
         this->destroy_data();
     }
     else {
+
         netWork->stop();
-        ui->StartButton->setText(tr("开始"));
+        ui->StartButton->setText(QStringLiteral("开始"));
         isStarted = false;
         tableModel->stop();
     }
@@ -112,19 +111,13 @@ void MainWindow::clickWriteGateButton()
         QMessageBox::information(this, "My Tittle", "门限值需在0到255范围之间");
         return;
     }
-    //QString id = ui->i->text();
-    //qDebug() << ip << port << gate_value;
+
     if(isStarted == true){
         netWork->write(ip,port,id_no,gate_value);
         qDebug() << ip << port << gate_value << id_no;
     }else{
         QMessageBox::information(this, "My Tittle", "需要先建立连接");
     }
-
-//    netWork->udpSocket->writeDatagram(
-//                     tempSendData, tempSendData.length(),
-//                     QHostAddress("192.168.0.102"), 5555);
-    //QMessageBox::information(this, "My Tittle", "write World!");
 }
 
 MainWindow::~MainWindow()
@@ -133,14 +126,14 @@ MainWindow::~MainWindow()
 }
 void MainWindow::receiveNetworkConstructError()
 {
-    QMessageBox::information(this, tr("error"),
-                                     tr("udp socket create error!"));
+    QMessageBox::information(this, QStringLiteral("error"),
+                                     QStringLiteral("udp socket create error!"));
 
 }
 void MainWindow::sendNetworkConstructError()
 {
-    QMessageBox::information(this, tr("error"),
-                                     tr("本地ip需要设置为192.168.0.8!"));
+    QMessageBox::information(this, QStringLiteral("error"),
+                                     QStringLiteral("本地ip需要设置为192.168.0.8!"));
 
 }
 void MainWindow::updateStation_list(){

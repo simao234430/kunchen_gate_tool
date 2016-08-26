@@ -1,7 +1,8 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include <QApplication>
 #include <iostream>
 #include <QDebug>
+#include <QTextCodec>
 int main(int argc, char *argv[])
 {
     //qDebug() << "test";
