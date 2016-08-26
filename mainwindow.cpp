@@ -3,14 +3,21 @@
 #include <QtGui/QStandardItemModel>
 #include <QMessageBox>
 #include <network.h>
+#include <QTimer>
+#include <QDebug>
+#include "tablemodel.h"
+#include <QHostAddress>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-
+    //listOfPairs = new QList<QPair<QString, StationData> >();
+    //stationDataMap = new QMap<QString, StationData>();
     ui->setupUi(this);
     init();
     connect(netWork, SIGNAL(networkeErrorsignal(const QString&)), this, SLOT(receiveNetworkConstructError()));
+    connect(netWork, SIGNAL(sendnetworkeErrorsignal(const QString&)), this, SLOT(sendNetworkConstructError()));
     connect(ui->StartButton, SIGNAL(clicked()), this, SLOT(clickStartButton()));
     connect(ui->WriteGateButton, SIGNAL(clicked()), this, SLOT(clickWriteGateButton()));
 }
@@ -19,58 +26,105 @@ void MainWindow::initInput()
 {
     ui->Input_ip->setText(tr("127.0.0.1"));
     ui->Input_port->setText(tr("8888"));
-    ui->Input_time->setText(tr("60"));
+    ui->Input_time->setText(tr("-1"));
     ui->Input_time_step->setText(tr("1"));
     ui->input_gate_value->setText(tr("100"));
 }
 
+void MainWindow::updateInterface()
+{
+    //qDebug() << "stationDataMap->count()" << QString::number(stationDataMap->count(), 10);
+    qDebug() << "updateInterface";
+    //tableModel->dataChanged();
+}
+
+void MainWindow::initModel()
+{
+    tableModel = new TableModel();
+    tableModel->parentWindow = this;
+    tableModel->listOfPairs = new QList<QPair<QString, StationData*> >();
+    qDebug() << "listOfPairs address:" << tableModel->listOfPairs;
+    ui->tableView->setModel(tableModel);
+    ui->station_list->setModel(tableModel->model);
+    //ui->tableView->resizeColumnsToContents();
+    ui->tableView->show();
+}
+
+void MainWindow::destroy_data(){
+    tableModel->destroy_data();
+    qDebug() << "MainWindow->destroy_data()";
+}
+
 void MainWindow::init()
 {
-
     initInput();
-    netWork = new NetWork();
-    QStandardItemModel  *model = new QStandardItemModel();
-    model->setColumnCount(4);
+    initModel();
+    qDebug() << "init";
+    netWork = new NetWork(this);
+    //updateInterface();
+}
 
-    model->setHeaderData(0,Qt::Horizontal,QString::fromLocal8Bit("基站号"));
-    model->setHeaderData(1,Qt::Horizontal,QString::fromLocal8Bit("状态"));
-    model->setHeaderData(2,Qt::Horizontal,QString::fromLocal8Bit("门限"));
-    model->setHeaderData(3,Qt::Horizontal,QString::fromLocal8Bit("次数"));
-    for(int i=1;i<40;i++){
-        QStandardItem* item1 = new QStandardItem(tr(""));
-        QStandardItem* item2 = new QStandardItem(tr(""));
-        QStandardItem* item3 = new QStandardItem(tr(""));
-        QStandardItem* item4 = new QStandardItem(tr(""));
-        item1->setEditable(false);
-        item2->setEditable(false);
-        item3->setEditable(false);
-        item4->setEditable(false);
-        QList<QStandardItem*> item;
-        item << item1 << item2 << item3 << item4;
-        model->appendRow(item);
-    }
+void MainWindow::timeout_handler()
+{
+    //interfaceTimer->stop();
+    //qDebug() << "stop";
+    this->clickStartButton();
 
-    ui->tableView->setModel(model);
 }
 
 void MainWindow::clickStartButton()
 {
     if(false == isStarted) {
-        ui->StartButton->setText(tr("停止"));
-        isStarted = true;
-        netWork->start();
+        bool result = netWork->start();
+        if(result == true){
+            ui->StartButton->setText(tr("停止"));
+            isStarted = true;
+        }
+        int stop_time = ui->Input_time->text().toUInt();
+        if(stop_time >0){
+            //qDebug() <<"stop_time >0";
+            //interfaceTimer = new QTimer(this);
+            //interfaceTimer->start(stop_time*1000);
+            QTimer::singleShot(stop_time*1000, this, SLOT(timeout_handler()));
+            //connect(interfaceTimer, SIGNAL(timeout()), this, SLOT(timeout_handler()));
+        }
+        this->destroy_data();
     }
     else {
+        netWork->stop();
         ui->StartButton->setText(tr("开始"));
         isStarted = false;
-        netWork->stop();
+        tableModel->stop();
     }
 
 }
 
 void MainWindow::clickWriteGateButton()
 {
-    QMessageBox::information(this, "My Tittle", "write World!");
+    //QString tempSendData("test");
+    QString ip = ui->Input_ip->text();
+    QString port = ui->Input_port->text();
+    QString gate_value = ui->input_gate_value->text();
+    QString id_no = ui->station_list->currentText();
+
+    int value = gate_value.toInt();
+    if(value > 255 || value < 0){
+        QMessageBox::information(this, "My Tittle", "门限值需在0到255范围之间");
+        return;
+    }
+    //QString id = ui->i->text();
+    //qDebug() << ip << port << gate_value;
+    if(isStarted == true){
+        netWork->write(ip,port,id_no,gate_value);
+        qDebug() << ip << port << gate_value << id_no;
+    }else{
+        QMessageBox::information(this, "My Tittle", "需要先建立连接");
+    }
+
+//    netWork->udpSocket->writeDatagram(
+//                     tempSendData, tempSendData.length(),
+//                     QHostAddress("192.168.0.102"), 5555);
+    //QMessageBox::information(this, "My Tittle", "write World!");
 }
 
 MainWindow::~MainWindow()
@@ -82,4 +136,13 @@ void MainWindow::receiveNetworkConstructError()
     QMessageBox::information(this, tr("error"),
                                      tr("udp socket create error!"));
 
+}
+void MainWindow::sendNetworkConstructError()
+{
+    QMessageBox::information(this, tr("error"),
+                                     tr("本地ip需要设置为192.168.0.8!"));
+
+}
+void MainWindow::updateStation_list(){
+    ui->station_list->setCurrentIndex(0);
 }

@@ -16,11 +16,14 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     network.cpp \
     stationdata.cpp \
-    config.cpp
+    config.cpp \
+    tablemodel.cpp
+
 
 HEADERS  += mainwindow.h \
     network.h \
     stationdata.h \
-    config.h
+    config.h \
+    tablemodel.h
 
 FORMS    += mainwindow.ui

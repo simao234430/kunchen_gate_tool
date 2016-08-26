@@ -10,19 +10,26 @@ class NetWork : public QObject
     Q_OBJECT
 public:
     explicit NetWork(QObject *parent = 0);
-    void start();
+    bool start();
     void stop();
-
+    void write(QString ip,QString port,QString id_no,QString value);
+    QUdpSocket *udpSocket;
+    QUdpSocket *sendudpSocket;
 signals:
     void networkeErrorsignal(const QString&);
+    void sendnetworkeErrorsignal(const QString&);
 public slots:
     void dataReceived();
 private:
     int port;
-    QUdpSocket *udpSocket;
+    int count;
+
+    void process(QByteArray& datagram);
+
+    MainWindow* parentWindow;
     //MainWindow *parentWidget;
-    //bool isStarted;
-    QMap<QString, StastionData> *map;
+    //bool isStarted;@
+
 };
 
 #endif // NETWORK_H

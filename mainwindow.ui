@@ -155,16 +155,6 @@
            </rect>
           </property>
          </widget>
-         <zorder>label_2</zorder>
-         <zorder>label_3</zorder>
-         <zorder>Input_ip</zorder>
-         <zorder>Input_port</zorder>
-         <zorder>StartButton</zorder>
-         <zorder>label_4</zorder>
-         <zorder>label_5</zorder>
-         <zorder>Input_time_step</zorder>
-         <zorder>Input_time</zorder>
-         <zorder>groupBox</zorder>
         </widget>
        </item>
        <item>
@@ -221,13 +211,13 @@
            <string>写入</string>
           </property>
          </widget>
-         <widget class="QListView" name="station_list">
+         <widget class="QComboBox" name="station_list">
           <property name="geometry">
            <rect>
-            <x>10</x>
+            <x>0</x>
             <y>40</y>
-            <width>101</width>
-            <height>21</height>
+            <width>104</width>
+            <height>26</height>
            </rect>
           </property>
          </widget>
