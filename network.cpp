@@ -5,12 +5,30 @@
 #include <mainwindow.h>
 #include <stationdata.h>
 #include "tablemodel.h"
-
+#include <QDateTime>
+//std::vector<char> vec(52);
+char const hexchar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A',   'B','C','D','E','F'};
+std::string byte_2_str(const char* bytes, int size) {
+  std::string str;
+  for (int i = 0; i < size; ++i) {
+    const char ch = bytes[i];
+    str.append(&hexchar[(ch  & 0xF0) >> 4], 1);
+    str.append(&hexchar[ch & 0xF], 1);
+  }
+  return str;
+}
 NetWork::NetWork(QObject *parent) : QObject(parent)
 {
-    this->parentWindow = reinterpret_cast<MainWindow*>(parent);
+    //this->parentWindow = reinterpret_cast<MainWindow*>(parent);
     port = 5555;
     count = 0;
+    QDateTime current_date_time = QDateTime::currentDateTime();
+    QString current_date = current_date_time.toString("yyyy-MM-dd_hh:mm:ss");
+    QString s = QString("data") + current_date + QString(".txt");
+    ofs.open (s.toStdString(), std::ofstream::out | std::ofstream::app);
+
+    //ofs.rdbuf()->pubsetbuf(&vec.front(),vec.size());
+
 }
 void NetWork::write(QString ip,QString port,QString id_no,QString value)
 {
@@ -28,6 +46,10 @@ void NetWork::write(QString ip,QString port,QString id_no,QString value)
     tempSendData.append(0x77);
     udpSocket->writeDatagram(tempSendData,QHostAddress(ip), port.toInt());
 }
+void NetWork::flushLog()
+{
+    ofs.flush();
+}
 
 void NetWork::dataReceived()
 {
@@ -36,6 +58,8 @@ void NetWork::dataReceived()
         datagram.resize(udpSocket->pendingDatagramSize());
         udpSocket->readDatagram(datagram.data(), datagram.size());
         count++;
+        ofs << byte_2_str(datagram.data(),datagram.size()).data() << '\n';
+        ofs.flush();
         process(datagram);
     }
 }
@@ -51,12 +75,14 @@ void NetWork::process(QByteArray& datagram)
         {
             QString id_no = QString(QByteArray(1,datagram.data()[3 + i*6 + 5]).toHex());
             QString gate_value = QString(QByteArray(1,datagram.data()[3 + i*6 + 4]).toHex());
-            if( !(this->parentWindow->tableModel->already_exist_station_id(id_no)) )
+
+            if( !(this->tableModel->already_exist_station_id(id_no)) )
             {
-                this->parentWindow->tableModel->addEntry(id_no,gate_value);
-                this->parentWindow->updateStation_list();
+                this->tableModel->addEntry(id_no,gate_value);
+                emit sendIDlistsignal("add id");
+                //this->updateStation_list();
             }else {
-                this->parentWindow->tableModel->updateEntry(id_no,gate_value);
+                this->tableModel->updateEntry(id_no,gate_value);
             }
         }
     }

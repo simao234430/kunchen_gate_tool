@@ -1,6 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
+#include <fstream>
 #include <QMainWindow>
 //#include <QTableView>
 class NetWork;
@@ -23,23 +23,27 @@ public:
     void init();
     void initInput();
     void initModel();
-    void updateStation_list();
-    void updateInterface();
+
+
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 public slots:
+    void updateInterface();
     void timeout_handler();
     void clickStartButton();
     void clickWriteGateButton();
     void receiveNetworkConstructError();
     void sendNetworkConstructError();
     void destroy_data();
+    void updateStation_list();
 private:
 
     NetWork *netWork;
     bool isStarted;
     Config *inputModel;
     QTimer* interfaceTimer;
+    QTimer* stepshowTimer;
+
 
 
 

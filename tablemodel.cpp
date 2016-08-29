@@ -1,30 +1,36 @@
 ﻿#include "tablemodel.h"
 #include <QDebug>
 #include <stationdata.h>
+#include <QDateTime>
+#include <stationdata.h>
 QString Status_str[3] = {"inited","actived","disactived"};
+
+QString TableHead[] = {"基站号",
+                        "状态",
+                        "门限值",
+                        "状态接收次数统计",
+                        "最后接受包时间",
+                        "掉线次数",
+                        "保留2",
+                        "保留3"};
 TableModel::TableModel(QObject *parent)
     : QAbstractTableModel(parent)
 {
     qDebug() << "TableModel init";
     id_list = new QStringList();
     model = new QStringListModel();
-    //id_list = new QStringList();
-    //model->setStringList(*id_list);
-
 }
 void TableModel::stop()
 {
     for(QPair<QString, StationData*> e:*listOfPairs) {
-        e.second->updateTimer->stop();
+        //e.second->updateTimer->stop();
     }
 }
 
 void TableModel::destroy_data()
 {
     qDebug() << "tableModel->destroy_data()";
-    //delete id_list;
-    //id_list->clear();
-    //foreach(QPair<QString, StationData*> e ,*listOfPairs) {
+
     for(QPair<QString, StationData*> e:*listOfPairs) {
         delete e.second;
         listOfPairs->removeOne(e);
@@ -44,22 +50,7 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
         return QVariant();
 
     if (orientation == Qt::Horizontal) {
-        switch (section) {
-            case 0:
-                return QStringLiteral("基站号");
-            case 1:
-                return QStringLiteral("状态");
-            case 2:
-                return QStringLiteral("门限值");
-            case 3:
-                return QStringLiteral("状态接收次数统计");
-            case 4:
-                return QStringLiteral("保留1");
-            case 5:
-                return QStringLiteral("保留2");
-            default:
-                return QVariant();
-        }
+            return TableHead[section];
     }
     return QVariant();
 }
@@ -75,7 +66,8 @@ int TableModel::rowCount(const QModelIndex &parent) const
 int TableModel::columnCount(const QModelIndex &parent) const
 {
     //qDebug() << "columnCount";
-    return 6;
+    return (sizeof(TableHead) / sizeof(TableHead[0]));
+    //return 6;
 
     // FIXME: Implement me!
 }
@@ -100,7 +92,6 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
 
     if (role == Qt::DisplayRole) {
         bool ok = false;
-
         if (index.column() == 0)
             return pair.first;
         else if (index.column() == 1)
@@ -109,6 +100,14 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
             return QString(pair.second->gateValue).toInt(&ok,16);
         else if (index.column() == 3)
             return pair.second->receive_count;
+        else if (index.column() == 4){
+            //QDateTime current_date_time = pair.second->
+            QString current_date = pair.second->lastUpdateTime->toString("hh:mm:ss zzz");
+            return current_date;
+        }
+        else if (index.column() == 5){
+            return pair.second->off_line_count;
+        }
     }
     return QVariant();
 }
@@ -119,10 +118,8 @@ QPair<QString, StationData*> TableModel::find(QString s)
     QList< QPair<QString, StationData*> >::iterator i;
     for(i=this->listOfPairs->begin(); i!=this->listOfPairs->end(); ++i)
     {
-
         if(QString::compare(s,i->first) ==0){
-
-            return *i;
+          return *i;
         }
     }
     return QPair<QString, StationData*>("unfind",0);
@@ -136,14 +133,11 @@ bool TableModel::already_exist_station_id(QString s)
     }else{
         return true;
     }
-
 }
 bool TableModel::insertRows(int position, int rows, const QModelIndex &index)
 {
     Q_UNUSED(index);
     beginInsertRows(QModelIndex(), position, position + rows - 1);
-
-
     endInsertRows();
     return true;
 }
@@ -152,12 +146,27 @@ void TableModel::updateEntry(QString id_no,QString value)
     QPair<QString, StationData*> result = find(id_no);
     result.second->update(value);
 
-    emit dataChanged(QModelIndex(),QModelIndex());
+    //emit dataChanged(QModelIndex(),QModelIndex());
     // todo
 }
 
-void TableModel::updataInterface(){
+void TableModel::updateInterface(){
+    //QDateTime current_date_time = QDateTime::currentDateTime();
+    //QString current_date = current_date_time.toString("yyyy-MM-dd hh:mm:ss ddd");
+    //qDebug() << "emit data" <<  current_date_time;
+    QList< QPair<QString, StationData*> >::iterator i;
+    for(i=this->listOfPairs->begin(); i!=this->listOfPairs->end(); ++i)
+    {
+        int diff_time = i->second->lastUpdateTime->secsTo(QDateTime::currentDateTime());
+        //qDebug() << diff_time;
+        if(i->second->status == actived && diff_time > this->timer_out_step){
+            i->second->status = disactived;
+            i->second->off_line_count++;
+        }
+    }
     emit dataChanged(QModelIndex(),QModelIndex());
+    //遍历
+
 }
 
 void TableModel::addEntry(QString s,QString gateValue)
@@ -166,7 +175,7 @@ void TableModel::addEntry(QString s,QString gateValue)
     //tempData->init();
     tempData->receive_count = 1;
     tempData->gateValue = gateValue;
-
+    tempData->lastUpdateTime = new QDateTime();
     QList<QPair<QString, StationData*> >* list = getList();
     QPair<QString, StationData*> pair(s, tempData);
     this->listOfPairs->append(pair);

@@ -7,7 +7,7 @@
 #include <QDebug>
 #include "tablemodel.h"
 #include <QHostAddress>
-
+#include <QDateTime>
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //stationDataMap = new QMap<QString, StationData>();
     ui->setupUi(this);
     init();
+    connect(netWork, SIGNAL(sendIDlistsignal(const QString&)), this, SLOT(updateStation_list()));
     connect(netWork, SIGNAL(networkeErrorsignal(const QString&)), this, SLOT(receiveNetworkConstructError()));
     connect(netWork, SIGNAL(sendnetworkeErrorsignal(const QString&)), this, SLOT(sendNetworkConstructError()));
     connect(ui->StartButton, SIGNAL(clicked()), this, SLOT(clickStartButton()));
@@ -35,13 +36,16 @@ void MainWindow::updateInterface()
 {
     //qDebug() << "stationDataMap->count()" << QString::number(stationDataMap->count(), 10);
     qDebug() << "updateInterface";
+    this->tableModel->updateInterface();
+    //this->netWork->flushLog();
     //tableModel->dataChanged();
 }
 
 void MainWindow::initModel()
 {
+
     tableModel = new TableModel();
-    tableModel->parentWindow = this;
+    //tableModel->table = this;
     tableModel->listOfPairs = new QList<QPair<QString, StationData*> >();
     qDebug() << "listOfPairs address:" << tableModel->listOfPairs;
     ui->tableView->setModel(tableModel);
@@ -60,21 +64,27 @@ void MainWindow::init()
     initInput();
     initModel();
     isStarted = false;
-    qDebug() << "init";
+    //qDebug() << "init";
     netWork = new NetWork(this);
+    netWork->tableModel = this->tableModel;
+    stepshowTimer = new QTimer(this);
 
 }
 
 void MainWindow::timeout_handler()
 {
-
     this->clickStartButton();
-
 }
 
 void MainWindow::clickStartButton()
 {
+
     if(false == isStarted) {
+        QString step = ui->Input_time_step->text();
+        stepshowTimer->start(step.toInt() * 1000);
+        tableModel->timer_out_step = step.toInt();
+        stepshowTimer->start(step.toInt() * 1000);
+        connect(stepshowTimer, SIGNAL(timeout()), this->tableModel, SLOT(updateInterface()));
         bool result = netWork->start();
         if(result == true){
             ui->StartButton->setText(QStringLiteral("停止"));
@@ -89,7 +99,8 @@ void MainWindow::clickStartButton()
         this->destroy_data();
     }
     else {
-
+        //delete stepshowTimer;
+        //disconnect(stepshowTimer, SIGNAL(timeout()), this->tableModel, SLOT(updateInterface()));
         netWork->stop();
         ui->StartButton->setText(QStringLiteral("开始"));
         isStarted = false;

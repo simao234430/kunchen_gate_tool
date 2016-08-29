@@ -4,7 +4,9 @@
 #include <QAbstractTableModel>
 #include <QStringListModel>
 #include <mainwindow.h>
+
 class StationData;
+
 class TableModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -22,6 +24,7 @@ public:
     QList<QPair<QString, StationData*> > *listOfPairs;
     QStringListModel *model;
     QStringList *id_list;
+    int timer_out_step;
     void destroy_data();
     void stop();
     MainWindow* parentWindow;
@@ -41,7 +44,7 @@ public:
     bool already_exist_station_id(QString s);
 private:
 public slots:
-    void updataInterface();
+    void updateInterface();
 };
 
 #endif // TABLEMODEL_H

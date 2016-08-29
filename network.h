@@ -1,7 +1,8 @@
 #ifndef NETWORK_H
 #define NETWORK_H
-
+#include "tablemodel.h"
 #include <QObject>
+#include <vector>
 class QUdpSocket;
 class MainWindow;
 class StastionData;
@@ -12,11 +13,14 @@ public:
     explicit NetWork(QObject *parent = 0);
     bool start();
     void stop();
+    void flushLog();
     void write(QString ip,QString port,QString id_no,QString value);
     QUdpSocket *udpSocket;
-    QUdpSocket *sendudpSocket;
+    TableModel* tableModel;
+    //QUdpSocket *sendudpSocket;
 signals:
     void networkeErrorsignal(const QString&);
+    void sendIDlistsignal(const QString&);
     void sendnetworkeErrorsignal(const QString&);
 public slots:
     void dataReceived();
@@ -25,8 +29,9 @@ private:
     int count;
 
     void process(QByteArray& datagram);
+    std::ofstream ofs;
 
-    MainWindow* parentWindow;
+    //MainWindow* parentWindow;
     //MainWindow *parentWidget;
     //bool isStarted;@
 

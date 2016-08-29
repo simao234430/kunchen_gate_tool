@@ -4,6 +4,12 @@
 #include <QString>
 #include <QTimer>
 #include "tablemodel.h"
+enum statu_value {
+    inited = 0,
+    actived = 1,
+    disactived = 2
+};
+
 class StationData: public QObject
 {
     Q_OBJECT
@@ -20,16 +26,14 @@ public:
     QString gateValue;
     int status;
     int receive_count;
+    int off_line_count;
     bool off_line;
-    QTimer* updateTimer;
+    //QTimer* updateTimer;
     TableModel* parentModel;
+    QDateTime* lastUpdateTime;
 signals:
-    void timeout_updataInterface();
+    void timeout_updateInterface();
 private:
-
-
-
-
 
 };
 
